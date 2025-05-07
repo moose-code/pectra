@@ -112,7 +112,7 @@ export default function Home() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="text-center max-w-3xl px-4">
-        <h1 className="text-xl font-medium mb-2 text-gray-500 dark:text-gray-400">
+        <h1 className="text-xl font-medium mb-4 text-gray-500 dark:text-gray-400">
           EIP-7702 Transactions
         </h1>
         <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8 mx-auto mb-6">
@@ -122,7 +122,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-6xl font-bold text-indigo-600 dark:text-indigo-400">
-              {count}
+              {count.toLocaleString()}
             </div>
           )}
         </div>
@@ -130,30 +130,33 @@ export default function Home() {
         {latestTxHashes.length > 0 && (
           <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 mx-auto">
             <h2 className="text-lg font-medium mb-4 text-gray-600 dark:text-gray-300">
-              Latest 10 Transactions
+              Latest 10 EIP-7702 Transactions
             </h2>
             <div className="overflow-hidden">
-              {latestTxHashes.map((hash, index) => (
-                <div
-                  key={index}
-                  className="text-xs md:text-sm font-mono mb-2 text-left p-2 bg-gray-50 dark:bg-gray-700 rounded truncate hover:text-indigo-500 transition-colors"
-                >
-                  <a
-                    href={`https://etherscan.io/tx/${hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
+              {latestTxHashes
+                .slice()
+                .reverse()
+                .map((hash, index) => (
+                  <div
+                    key={index}
+                    className="text-xs md:text-sm font-mono mb-2 text-left p-2 bg-gray-50 dark:bg-gray-700 rounded truncate hover:text-indigo-500 transition-colors"
                   >
-                    {hash}
-                  </a>
-                </div>
-              ))}
+                    <a
+                      href={`https://etherscan.io/tx/${hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
+                    >
+                      {hash}
+                    </a>
+                  </div>
+                ))}
             </div>
           </div>
         )}
 
         <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
-          Latest block height: {archiveHeight}
+          Latest block height: {archiveHeight.toLocaleString()}
         </p>
       </div>
     </div>
