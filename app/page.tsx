@@ -8,10 +8,20 @@ interface Transaction {
   authorization_list?: Record<string, unknown>[];
 }
 
+// Define block interface
+interface Block {
+  block_number: number;
+  transactions: Transaction[];
+}
+
 export default function Home() {
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [latestTxHashes, setLatestTxHashes] = useState<string[]>([]);
+  const [latestBlockProcessed, setLatestBlockProcessed] =
+    useState<number>(22400000);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [archiveHeight, setArchiveHeight] = useState<number>(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +33,7 @@ export default function Home() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from_block: 22400000,
+            from_block: latestBlockProcessed,
             include_all_blocks: true,
             transactions: [
               {
@@ -32,23 +42,55 @@ export default function Home() {
             ],
             join_mode: "JoinAll",
             field_selection: {
+              block: ["block_number"],
               transaction: ["authorization_list", "hash"],
             },
           }),
         });
 
         const data = await response.json();
-        if (data && data.data && data.data[0] && data.data[0].transactions) {
-          const transactions = data.data[0].transactions;
-          setCount(transactions.length);
 
-          // Extract and store the 10 latest transaction hashes
-          const hashes = transactions
-            .slice(Math.max(0, transactions.length - 10))
-            .map((tx: Transaction) => tx.hash)
-            .filter((hash: string) => hash); // Filter out any undefined hashes
+        // Extract archive_height if available
+        if (data && data.archive_height) {
+          setArchiveHeight(data.archive_height);
+        }
 
-          setLatestTxHashes(hashes);
+        if (data && data.data && data.data.length > 0) {
+          // Process new blocks and find the latest block number
+          let newMaxBlock = latestBlockProcessed;
+          let newTransactions: Transaction[] = [];
+
+          data.data.forEach((block: Block) => {
+            if (block.block_number > newMaxBlock) {
+              newMaxBlock = block.block_number;
+            }
+            if (block.transactions) {
+              newTransactions = newTransactions.concat(block.transactions);
+            }
+          });
+
+          // Only update if we have new transactions
+          if (newTransactions.length > 0) {
+            const updatedTransactions = [
+              ...allTransactions,
+              ...newTransactions,
+            ];
+            setAllTransactions(updatedTransactions);
+            setCount(updatedTransactions.length);
+
+            // Extract and store the 10 latest transaction hashes
+            const hashes = updatedTransactions
+              .slice(Math.max(0, updatedTransactions.length - 10))
+              .map((tx: Transaction) => tx.hash)
+              .filter((hash: string) => hash); // Filter out any undefined hashes
+
+            setLatestTxHashes(hashes);
+          }
+
+          // Update the latest block we've processed
+          if (newMaxBlock > latestBlockProcessed) {
+            setLatestBlockProcessed(newMaxBlock);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -60,8 +102,8 @@ export default function Home() {
     // Initial fetch
     fetchData();
 
-    // Set up interval for fetching data every second
-    const intervalId = setInterval(fetchData, 1000);
+    // Set up interval for fetching data every 3 seconds
+    const intervalId = setInterval(fetchData, 3000);
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
@@ -111,7 +153,7 @@ export default function Home() {
         )}
 
         <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
-          Refreshing every second
+          Latest block height: {archiveHeight}
         </p>
       </div>
     </div>
