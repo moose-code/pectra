@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from "react";
 
+// Define transaction interface
+interface Transaction {
+  hash: string;
+  authorization_list?: Record<string, unknown>[];
+}
+
 export default function Home() {
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -39,7 +45,7 @@ export default function Home() {
           // Extract and store the 10 latest transaction hashes
           const hashes = transactions
             .slice(Math.max(0, transactions.length - 10))
-            .map((tx: any) => tx.hash)
+            .map((tx: Transaction) => tx.hash)
             .filter((hash: string) => hash); // Filter out any undefined hashes
 
           setLatestTxHashes(hashes);
